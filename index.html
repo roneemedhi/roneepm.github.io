@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arcade Portfolio Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        --bg: #05080d;
+        --bg-2: #0d1117;
+        --panel: rgba(15, 23, 42, 0.78);
+        --panel-strong: rgba(11, 18, 30, 0.92);
+        --panel-alt: rgba(9, 12, 20, 0.9);
+        --line: rgba(148, 163, 184, 0.18);
+        --text: #ecf4ff;
+        --muted: #8da3bd;
+        --cyan: #60a5fa;
+        --green: #34d399;
+        --amber: #fbbf24;
+        --orange: #fb923c;
+        --red: #fb7185;
+        --purple: #a78bfa;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background:
+          radial-gradient(circle at 20% 10%, rgba(96, 165, 250, 0.14), transparent 28%),
+          radial-gradient(circle at 80% 20%, rgba(52, 211, 153, 0.10), transparent 20%),
+          linear-gradient(180deg, #070b10 0%, #0b1017 100%);
+        color: var(--text);
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+        background-size: 22px 22px;
+        mask-image: radial-gradient(circle at center, black 30%, transparent 100%);
+        pointer-events: none;
+        opacity: 0.7;
+      }
+
+      .dashboard-shell {
+        max-width: 1500px;
+        margin: 0 auto;
+        padding: 18px 16px 40px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .statusbar {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1.5fr 1fr 1fr;
+        gap: 12px;
+        background: linear-gradient(180deg, rgba(10,14,23,0.9), rgba(15,23,42,0.75));
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+        border-radius: 18px;
+        padding: 14px 18px;
+        backdrop-filter: blur(10px);
+      }
+
+      .status-chip {
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .status-chip::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 4px;
+        background: linear-gradient(180deg, var(--cyan), var(--green));
+        opacity: 0.9;
+      }
+
+      .status-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .status-value {
+        font-size: clamp(1.35rem, 2vw, 2.2rem);
+        font-weight: 800;
+        letter-spacing: -0.06em;
+        color: #f8fbff;
+      }
+
+      .status-value small {
+        font-size: 0.55em;
+        opacity: 0.9;
+      }
+
+      .complexity-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 180px;
+        max-width: 240px;
+        padding: 10px 16px;
+        border-radius: 999px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(52, 211, 153, 0.12);
+        color: #d7ffe9;
+        box-shadow: inset 0 0 20px rgba(52, 211, 153, 0.12), 0 0 18px rgba(52, 211, 153, 0.12);
+      }
+
+      .complexity-pill.state-managed {
+        background: rgba(96,165,250,0.12);
+        color: #dfeeff;
+        box-shadow: inset 0 0 20px rgba(96,165,250,0.12), 0 0 18px rgba(96,165,250,0.12);
+      }
+
+      .complexity-pill.state-enterprise {
+        background: rgba(251,146,60,0.14);
+        color: #ffe3bf;
+        box-shadow: inset 0 0 20px rgba(251,146,60,0.14), 0 0 18px rgba(251,146,60,0.14);
+      }
+
+      .badge-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(251, 191, 36, 0.25);
+        background: rgba(251, 191, 36, 0.08);
+        color: #ffe9a7;
+        font-size: 0.69rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 800;
+        opacity: 0;
+        transform: translateY(4px);
+        transition: opacity 0.25s ease, transform 0.25s ease;
+      }
+
+      .status-badge.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .viewport-shell {
+        position: relative;
+        margin-top: 18px;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        background: linear-gradient(180deg, rgba(7, 11, 16, 0.88), rgba(12, 17, 24, 0.92));
+        box-shadow: 0 25px 60px rgba(0,0,0,0.45), inset 0 0 30px rgba(96,165,250,0.05);
+      }
+
+      .viewport-shell::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent 18%, transparent 100%);
+        pointer-events: none;
+      }
+
+      canvas {
+        width: 100%;
+        height: 540px;
+        display: block;
+        background: radial-gradient(circle at 50% 20%, rgba(96,165,250,0.12), transparent 25%), #090d13;
+      }
+
+      .control-legend {
+        position: absolute;
+        right: 14px;
+        top: 14px;
+        z-index: 3;
+        width: min(340px, calc(100% - 30px));
+        backdrop-filter: blur(12px);
+        background: rgba(7, 11, 18, 0.58);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 14px;
+        padding: 12px 14px 11px;
+        box-shadow: 0 16px 38px rgba(0,0,0,0.35);
+      }
+
+      .legend-head {
+        color: var(--muted);
+        letter-spacing: 0.14em;
+        font-size: 10px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      .legend-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 7px 0;
+        border-top: 1px solid rgba(148,163,184,0.12);
+      }
+
+      .legend-row:first-of-type {
+        border-top: 0;
+      }
+
+      .legend-key {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 48px;
+        padding: 6px 7px;
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148,163,184,0.14);
+        color: #f3f7ff;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+
+      .legend-text {
+        color: #dceaff;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+      }
+
+      .module-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 18px;
+      }
+
+      .module-card {
+        position: relative;
+        background: linear-gradient(180deg, rgba(11,16,24,0.92), rgba(17,24,39,0.75));
+        border: 1px solid rgba(148,163,184,0.15);
+        border-radius: 16px;
+        padding: 16px 18px 14px;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), 0 14px 30px rgba(0,0,0,0.22);
+        overflow: hidden;
+      }
+
+      .module-card::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto auto 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, var(--cyan), var(--green), var(--amber));
+        opacity: 0.8;
+      }
+
+      .module-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .module-name {
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: #f0f7ff;
+      }
+
+      .module-toggle {
+        position: relative;
+        width: 58px;
+        height: 32px;
+        border-radius: 999px;
+        background: rgba(148,163,184,0.18);
+        border: 1px solid rgba(148,163,184,0.18);
+        transition: all 0.25s ease;
+        cursor: pointer;
+      }
+
+      .module-toggle::after {
+        content: "";
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        left: 5px;
+        top: 4px;
+        border-radius: 50%;
+        background: #dfe8ff;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.38);
+        transition: transform 0.28s ease;
+      }
+
+      .module-card.active .module-toggle {
+        background: linear-gradient(90deg, rgba(52,211,153,0.26), rgba(96,165,250,0.26));
+        border-color: rgba(52,211,153,0.4);
+      }
+
+      .module-card.active .module-toggle::after {
+        transform: translateX(25px);
+        background: #d1fae5;
+      }
+
+      .module-card h4 {
+        margin: 12px 0 8px;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        font-size: 10px;
+      }
+
+      .module-card p {
+        margin: 0;
+        color: #dfeaf8;
+        font-size: 0.97rem;
+        line-height: 1.55;
+      }
+
+      .module-card .bonus {
+        margin-top: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #d7ffe9;
+        padding: 8px 10px;
+        background: rgba(52,211,153,0.08);
+        border-radius: 999px;
+        border: 1px solid rgba(52,211,153,0.2);
+      }
+
+      .module-card.active {
+        border-color: rgba(52,211,153,0.28);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 0 18px rgba(52,211,153,0.08);
+      }
+
+      .archive {
+        margin-top: 22px;
+        background: linear-gradient(180deg, rgba(8,12,18,0.9), rgba(11,17,25,0.82));
+        border: 1px solid rgba(148,163,184,0.16);
+        border-radius: 18px;
+        padding: 18px 18px 12px;
+        box-shadow: 0 20px 48px rgba(0,0,0,0.35);
+      }
+
+      .archive-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+
+      .archive-section {
+        border: 1px solid rgba(148,163,184,0.12);
+        border-radius: 14px;
+        background: rgba(10,15,22,0.72);
+        padding: 14px 16px 8px;
+      }
+
+      .archive-section h3 {
+        margin: 0 0 12px;
+        color: #f4f8ff;
+        font-size: 0.82rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .archive-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 10px;
+      }
+
+      .archive-list li {
+        border-top: 1px solid rgba(148,163,184,0.1);
+        padding-top: 9px;
+        color: #e4edfa;
+        line-height: 1.5;
+        font-size: 0.98rem;
+      }
+
+      .archive-list li:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .role-title {
+        font-weight: 800;
+        color: #f5f9ff;
+      }
+
+      .archive-meta {
+        color: #c7d7f0;
+      }
+
+      .archive-list strong {
+        color: #f5f9ff;
+      }
+
+      .archive-list em {
+        font-style: normal;
+        color: #9ad5ff;
+      }
+
+      .analytics-flows {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+
+      .flow-particle {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(96,165,250,1), rgba(52,211,153,0.9), rgba(255,255,255,0.1));
+        box-shadow: 0 0 14px rgba(96,165,250,0.8);
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.4);
+        animation: flow 1400ms ease-out forwards;
+      }
+
+      @keyframes flow {
+        0% {
+          opacity: 0.9;
+          transform: translate(-50%, -50%) scale(0.7);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(var(--tx), var(--ty)) scale(0.2);
+        }
+      }
+
+      @media (max-width: 980px) {
+        .statusbar {
+          grid-template-columns: 1fr;
+        }
+
+        .module-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .badge-row {
+          justify-content: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard-shell">
+      <header class="statusbar">
+        <div class="status-chip">
+          <div>
+            <span class="status-label">Portfolio Value Score</span>
+            <div class="status-value" id="scoreValue">1,400</div>
+          </div>
+          <div class="status-badge" id="mausBadge">10M+ MAUs</div>
+        </div>
+
+        <div class="status-chip">
+          <div>
+            <span class="status-label">System Complexity Load</span>
+            <div class="complexity-pill" id="complexityValue">Low</div>
+          </div>
+        </div>
+
+        <div class="status-chip">
+          <div>
+            <span class="status-label">Active Revenue Velocity</span>
+            <div class="status-value" id="revenueValue">+0%</div>
+          </div>
+        </div>
+      </header>
+
+      <div class="viewport-shell">
+        <canvas id="arcadeCanvas" width="1600" height="540"></canvas>
+
+        <div class="control-legend">
+          <div class="legend-head">Control Legend</div>
+          <div class="legend-row">
+            <div class="legend-key">W A S D</div>
+            <div class="legend-text">Move around</div>
+          </div>
+          <div class="legend-row">
+            <div class="legend-key">SPACE</div>
+            <div class="legend-text">Boost metric output</div>
+          </div>
+          <div class="legend-row">
+            <div class="legend-key">R</div>
+            <div class="legend-text">Reset layout state</div>
+          </div>
+        </div>
+
+        <div class="analytics-flows" id="flowLayer"></div>
+      </div>
+
+      <section class="module-grid">
+        <article class="module-card" data-module="eComicUni">
+          <div class="module-head">
+            <div class="module-name">eComicUni Automated Asset Systems</div>
+            <button class="module-toggle" aria-label="Toggle eComicUni module"></button>
+          </div>
+          <h4>Impact</h4>
+          <p>Automated workflows for content delivery, monetization, and retention loops.</p>
+          <div class="bonus">+350 Points • Managed load • +15% revenue</div>
+        </article>
+
+        <article class="module-card" data-module="Khatabook">
+          <div class="module-head">
+            <div class="module-name">Khatabook Enterprise Scale Ledger</div>
+            <button class="module-toggle" aria-label="Toggle Khatabook module"></button>
+          </div>
+          <h4>Impact</h4>
+          <p>Ledger infrastructure expansion across distributed enterprise analytics and scale operations.</p>
+          <div class="bonus">+500 Points • 10M+ MAUs • +18% revenue</div>
+        </article>
+
+        <article class="module-card" data-module="ZuariFarmhub">
+          <div class="module-head">
+            <div class="module-name">Zuari Farmhub Supply Chain Matrix</div>
+            <button class="module-toggle" aria-label="Toggle Zuari Farmhub module"></button>
+          </div>
+          <h4>Impact</h4>
+          <p>Regional supply chain orchestration, user logistics intelligence, and autonomous route optimization.</p>
+          <div class="bonus">+550 Points • 100K+ users • Scalable operations</div>
+        </article>
+      </section>
+
+      <section class="archive">
+        <div class="archive-grid">
+          <div class="archive-section">
+            <h3>Executive Advisory Roles</h3>
+            <ul class="archive-list">
+              <li><span class="role-title">Nest Management Ltd</span> <span class="archive-meta">(May 2026 - Sep 2026)</span> – AI Product Consultant: Formulated roadmaps for multi-tenant data architecture unlocking 10+ global market entries.</li>
+              <li><span class="role-title">GLG Global</span> <span class="archive-meta">(Jan 2025 - May 2026)</span> – Executive Product Consultant: Partnered with 6 corporate founders translating company OKRs into traceable technical product lines, influencing $10M+ in allocations.</li>
+              <li><span class="role-title">Candida Enterprise</span> <span class="archive-meta">(Jan 2024 - Dec 2024)</span> – Head of Product Consultant: Restructured regional squads compressing system latency by 15% and lifting active user engagement by 25%.</li>
+            </ul>
+          </div>
+
+          <div class="archive-section">
+            <h3>Enterprise Execution History</h3>
+            <ul class="archive-list">
+              <li><span class="role-title">eComicUni</span> <span class="archive-meta">(Feb 2025 - Sep 2025)</span> – Chief Product Officer: Governed end-to-end 0-to-1 automated content system configurations; grew platform retention metrics by 15% QoQ; maintained 99.9% availability.</li>
+              <li><span class="role-title">Vantage Circle</span> <span class="archive-meta">(Jul 2024 - Jan 2025)</span> – AI Product Manager: Led 50+ member cross-functional SaaS framework; compressed US enterprise client features delivery timelines by 20% for major US clients; optimized data structures lowering latency by 15%.</li>
+              <li><span class="role-title">Zuari Farmhub</span> <span class="archive-meta">(Feb 2023 - Dec 2023)</span> – Founding Product Manager: Steered 0-to-1 regional digital supply chain scaling to 100K+ active users across 6 territories in 10 months; integrated autonomous drone mappings; cut onboarding time-to-value by 40%.</li>
+              <li><span class="role-title">Khatabook</span> <span class="archive-meta">(Apr 2020 - Dec 2022)</span> – Product Manager: Scaled ledger framework transactions tracking past 10M+ MAUs; outpaced competitor benchmarks by +18% YoY retention; drove 12% revenue growth.</li>
+              <li><span class="role-title">CardUp</span> <span class="archive-meta">(Oct 2018 - Mar 2020)</span> – Product Manager: Restructured legacy backend infrastructure handling $2M+ monthly volumes; brought 95% of data loops into absolute GDPR/FCA compliance.</li>
+              <li><span class="role-title">HealthifyMe</span> <span class="archive-meta">(Jun 2016 - Sep 2018)</span> – Engineer: Constructed automated streaming pipelines; deployed automated engagement architectures that decreased application cost-to-serve metrics by 10%.</li>
+              <li><span class="role-title">Candida Enterprise</span> <span class="archive-meta">(Mar 2013 - May 2016)</span> – Product Manager: Deployed multi-seller marketplace for 200+ suppliers; lifted user satisfaction ratings by +45 points; passed 100% of InfoSec vulnerability audits.</li>
+              <li><span class="role-title">Cisco</span> <span class="archive-meta">(Aug 2012 - Feb 2013)</span> – Product Analyst: Designed 10+ real-time telemetry dashboards tracking US, APAC, and EMEA regions; improved customer handling times via data optimization pipelines.</li>
+            </ul>
+          </div>
+
+          <div class="archive-section">
+            <h3>Education &amp; Core Competencies</h3>
+            <ul class="archive-list">
+              <li><span class="role-title">University of Nottingham</span> <span class="archive-meta">(Sep 2025 - Sep 2026)</span> – MBA, Entrepreneurship &amp; Innovation. Student Representative.</li>
+              <li><span class="role-title">Visvesvaraya Technological University</span> <span class="archive-meta">(Sep 2008 - Jul 2012)</span> – Bachelor of Engineering (B.E.), Electronics and Communication.</li>
+              <li><span class="role-title">Core Skills</span>: Roadmap Strategy, 1-N Platform Scaling, Generative AI Applications, Corporate Capital Allocation Models. Practical working baseline with Java, Python, React Native, HTML, Azure DevOps, Jira, and Tableau.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("arcadeCanvas");
+      const ctx = canvas.getContext("2d");
+
+      const scoreEl = document.getElementById("scoreValue");
+      const complexityEl = document.getElementById("complexityValue");
+      const revenueEl = document.getElementById("revenueValue");
+      const mausBadge = document.getElementById("mausBadge");
+      const flowLayer = document.getElementById("flowLayer");
+
+      const state = {
+        score: 1400,
+        revenue: 0,
+        complexity: "Low",
+        activeModules: {
+          eComicUni: false,
+          Khatabook: false,
+          ZuariFarmhub: false,
+        },
+        unlocked: {
+          eComicUni: false,
+          Khatabook: false,
+          ZuariFarmhub: false,
+        },
+        userCapacity: "10K+",
+        boost: false,
+        lastTime: 0,
+      };
+
+      const keys = {
+        w: false,
+        a: false,
+        s: false,
+        d: false,
+        ArrowUp: false,
+        ArrowLeft: false,
+        ArrowDown: false,
+        ArrowRight: false,
+        " ": false
+      };
+
+      const player = {
+        x: 180,
+        y: 360,
+        radius: 12,
+        speed: 3.1
+      };
+
+      const nodes = [
+        { name: "eComicUni", x: 500, y: 140, radius: 58, color: "#60a5fa" },
+        { name: "Khatabook", x: 330, y: 280, radius: 60, color: "#34d399" },
+        { name: "Zuari Farmhub", x: 1150, y: 350, radius: 62, color: "#fbbf24" }
+      ];
+
+      function numberFormat(n) {
+        return new Intl.NumberFormat("en-US").format(Math.round(n));
+      }
+
+      function updateHeader() {
+        scoreEl.textContent = numberFormat(state.score);
+        revenueEl.textContent = `+${state.revenue}%`;
+
+        const complexityMap = {
+          Low: "Low",
+          Managed: "Managed",
+          Enterprise: "High Enterprise"
+        };
+
+        const complexityClass = state.complexity === "Managed"
+          ? "state-managed"
+          : state.complexity === "High Enterprise"
+            ? "state-enterprise"
+            : "";
+
+        complexityEl.textContent = complexityMap[state.complexity];
+        complexityEl.className = `complexity-pill ${complexityClass}`.trim();
+
+        mausBadge.classList.toggle("visible", state.activeModules.Khatabook || state.unlocked.Khatabook);
+      }
+
+      function spawnFlowParticle(fromX, fromY, targetX, targetY, color = "rgba(96,165,250,0.9)") {
+        const dot = document.createElement("div");
+        dot.className = "flow-particle";
+        dot.style.left = `${fromX}px`;
+        dot.style.top = `${fromY}px`;
+        dot.style.background = `radial-gradient(circle, ${color}, rgba(255,255,255,0.15))`;
+        dot.style.setProperty("--tx", `${targetX - fromX}px`);
+        dot.style.setProperty("--ty", `${targetY - fromY}px`);
+        flowLayer.appendChild(dot);
+        setTimeout(() => dot.remove(), 1500);
+      }
+
+      function triggerModuleFlow(targetSelector) {
+        const el = document.querySelector(targetSelector);
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const originX = rect.left + rect.width * 0.5;
+        const originY = rect.top + rect.height * 0.2;
+        const targetRect = document.getElementById("scoreValue").getBoundingClientRect();
+        const targetX = targetRect.left + targetRect.width * 0.5;
+        const targetY = targetRect.top + targetRect.height * 0.5;
+
+        for (let i = 0; i < 18; i++) {
+          const px = originX + (Math.random() - 0.5) * 24;
+          const py = originY + (Math.random() - 0.5) * 16;
+          const tx = targetX + (Math.random() - 0.5) * 60;
+          const ty = targetY + (Math.random() - 0.5) * 18;
+          setTimeout(() => {
+            spawnFlowParticle(px, py, tx, ty, i % 2 === 0 ? "rgba(96,165,250,0.9)" : "rgba(52,211,153,0.9)");
+          }, i * 18);
+        }
+      }
+
+      function setComplexity() {
+        if (state.activeModules.eComicUni && state.activeModules.Khatabook && state.activeModules.ZuariFarmhub) {
+          state.complexity = "High Enterprise";
+        } else if (state.activeModules.eComicUni || state.activeModules.Khatabook || state.activeModules.ZuariFarmhub) {
+          state.complexity = "Managed";
+        } else {
+          state.complexity = "Low";
+        }
+      }
+
+      function toggleModule(name) {
+        const moduleKey = name;
+        const isActive = state.activeModules[moduleKey];
+
+        if (isActive) {
+          state.activeModules[moduleKey] = false;
+          return;
+        }
+
+        state.activeModules[moduleKey] = true;
+
+        if (moduleKey === "eComicUni") {
+          state.score += 350;
+          state.revenue += 15;
+          state.complexity = "Managed";
+          state.unlocked.eComicUni = true;
+        }
+
+        if (moduleKey === "Khatabook") {
+          state.score += 500;
+          state.revenue += 18;
+          state.unlocked.Khatabook = true;
+          state.userCapacity = "100K+";
+        }
+
+        if (moduleKey === "ZuariFarmhub") {
+          state.score += 550;
+          state.revenue += 0;
+          state.userCapacity = "100K+";
+          state.unlocked.ZuariFarmhub = true;
+        }
+
+        setComplexity();
+        updateHeader();
+
+        const card = document.querySelector(`.module-card[data-module="${moduleKey}"]`);
+        if (card) {
+          card.classList.add("active");
+          triggerModuleFlow(`.module-card[data-module="${moduleKey}"] .bonus`);
+        }
+      }
+
+      function renderModuleState() {
+        document.querySelectorAll(".module-card").forEach((card) => {
+          const key = card.dataset.module;
+          const active = state.activeModules[key];
+          card.classList.toggle("active", active);
+        });
+      }
+
+      function resetState() {
+        state.score = 1400;
+        state.revenue = 0;
+        state.complexity = "Low";
+        state.activeModules = { eComicUni: false, Khatabook: false, ZuariFarmhub: false };
+        state.unlocked = { eComicUni: false, Khatabook: false, ZuariFarmhub: false };
+        state.userCapacity = "10K+";
+        player.x = 180;
+        player.y = 360;
+
+        renderModuleState();
+        updateHeader();
+      }
+
+      function activateNode(name) {
+        if (state.unlocked[name]) return;
+        state.unlocked[name] = true;
+
+        const rewards = {
+          eComicUni: { score: 350, revenue: 15, complexity: "Managed" },
+          Khatabook: { score: 500, revenue: 18, complexity: "Managed" },
+          "Zuari Farmhub": { score: 550, revenue: 0, complexity: "High Enterprise" }
+        };
+
+        const reward = rewards[name];
+        if (reward) {
+          state.score += reward.score;
+          state.revenue += reward.revenue;
+          state.activeModules[name] = true;
+          setComplexity();
+          updateHeader();
+          renderModuleState();
+        }
+
+        const card = document.querySelector(`.module-card[data-module="${name}"]`);
+        if (card) {
+          card.classList.add("active");
+          triggerModuleFlow(`.module-card[data-module="${name}"] .bonus`);
+        }
+      }
+
+      function handleKeyboardInput() {
+        const moveX = (keys.d || keys.ArrowRight ? 1 : 0) - (keys.a || keys.ArrowLeft ? 1 : 0);
+        const moveY = (keys.s || keys.ArrowDown ? 1 : 0) - (keys.w || keys.ArrowUp ? 1 : 0);
+
+        const length = Math.hypot(moveX, moveY) || 1;
+        const speed = player.speed * (keys[" "] ? 1.55 : 1);
+
+        if (moveX || moveY) {
+          player.x += (moveX / length) * speed;
+          player.y += (moveY / length) * speed;
+        }
+
+        player.x = Math.max(25, Math.min(canvas.width - 25, player.x));
+        player.y = Math.max(25, Math.min(canvas.height - 25, player.y));
+
+        if (keys[" "] && !state.boost) {
+          state.boost = true;
+          state.score += 12;
+          state.revenue = Math.min(100, state.revenue + 1);
+          updateHeader();
+        } else if (!keys[" "]) {
+          state.boost = false;
+        }
+
+        if (keys.r) {
+          resetState();
+          keys.r = false;
+        }
+      }
+
+      function detectNodeUnlock() {
+        nodes.forEach((node) => {
+          const dx = player.x - node.x;
+          const dy = player.y - node.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < node.radius + 16) {
+            activateNode(node.name);
+          }
+        });
+      }
+
+      function drawBackground() {
+        ctx.fillStyle = "#070b10";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        for (let y = 0; y < canvas.height; y += 30) {
+          ctx.strokeStyle = "rgba(148, 163, 184, 0.06)";
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        }
+
+        for (let x = 0; x < canvas.width; x += 30) {
+          ctx.strokeStyle = "rgba(148, 163, 184, 0.06)";
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, canvas.height);
+          ctx.stroke();
+        }
+
+        for (let i = 0; i < 50; i++) {
+          const x = (i * 97) % canvas.width;
+          const y = (i * 73) % canvas.height;
+          const alpha = 0.15 + ((i % 6) / 10);
+          ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+          ctx.fillRect(x + 4, y + 6, 2, 2);
+        }
+      }
+
+      function drawNode(node, active) {
+        const pulse = 12 + Math.sin(performance.now() * 0.006 + node.x) * 7;
+
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.radius + pulse * 0.08, 0, Math.PI * 2);
+        ctx.strokeStyle = active ? "rgba(255,255,255,0.8)" : "rgba(148, 163, 184, 0.35)";
+        ctx.lineWidth = active ? 1.5 : 1;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.radius - 10, 0, Math.PI * 2);
+        ctx.fillStyle = active ? "rgba(255,255,255,0.04)" : "rgba(15, 23, 42, 0.75)";
+        ctx.fill();
+        ctx.strokeStyle = active ? node.color : "rgba(148,163,184,0.18)";
+        ctx.lineWidth = active ? 2 : 1;
+        ctx.stroke();
+
+        ctx.fillStyle = active ? "#eff6ff" : "#d1d9e6";
+        ctx.font = "700 12px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(node.name, node.x, node.y + node.radius + 24);
+
+        if (!state.unlocked[node.name]) {
+          ctx.fillStyle = "rgba(255,255,255,0.9)";
+          ctx.font = "700 10px Inter, sans-serif";
+          ctx.fillText("LOCKED", node.x, node.y + 4);
+        } else {
+          ctx.fillStyle = node.color;
+          ctx.font = "700 10px Inter, sans-serif";
+          ctx.fillText("UNLOCKED", node.x, node.y + 4);
+        }
+      }
+
+      function drawPlayer() {
+        const glow = state.boost ? 18 : 10;
+
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.radius + glow * 0.14, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(96, 165, 250, 0.22)";
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "#ecf4ff";
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(player.x + 12, player.y);
+        ctx.lineTo(player.x + 18, player.y - 4);
+        ctx.lineTo(player.x + 18, player.y + 4);
+        ctx.closePath();
+        ctx.fillStyle = "#60a5fa";
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#0b1020";
+        ctx.fill();
+      }
+
+      function drawHUDText() {
+        ctx.fillStyle = "rgba(148, 163, 184, 0.85)";
+        ctx.font = "700 12px Inter, sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText("Vault", 30, 35);
+
+        ctx.fillStyle = "#dfefff";
+        ctx.font = "700 16px Inter, sans-serif";
+        ctx.fillText("Portfolio Map", 30, 60);
+
+        ctx.fillStyle = "rgba(148,163,184,0.8)";
+        ctx.font = "600 11px Inter, sans-serif";
+        ctx.fillText(`User capacity: ${state.userCapacity}`, 30, canvas.height - 26);
+
+        if (state.boost) {
+          ctx.fillStyle = "#f8fafc";
+          ctx.font = "800 11px Inter, sans-serif";
+          ctx.fillText("BOOST MODE", canvas.width - 140, 36);
+        }
+      }
+
+      function draw() {
+        drawBackground();
+
+        nodes.forEach((node) => {
+          const active = state.unlocked[node.name];
+          drawNode(node, active);
+        });
+
+        drawPlayer();
+        drawHUDText();
+
+        const playerGlow = state.boost ? "rgba(250, 204, 21, 0.9)" : "rgba(96,165,250,0.7)";
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, 30, 0, Math.PI * 2);
+        ctx.strokeStyle = playerGlow;
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([8, 12]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      function animate(now) {
+        const delta = (now - state.lastTime) / 1000 || 0.016;
+        state.lastTime = now;
+
+        handleKeyboardInput();
+        detectNodeUnlock();
+        draw();
+
+        requestAnimationFrame(animate);
+      }
+
+      document.querySelectorAll(".module-card").forEach((card) => {
+        const key = card.dataset.module;
+        const toggle = card.querySelector(".module-toggle");
+
+        toggle.addEventListener("click", () => {
+          toggleModule(key);
+          renderModuleState();
+        });
+      });
+
+      window.addEventListener("keydown", (event) => {
+        const key = event.key;
+        if (key in keys) {
+          keys[key] = true;
+          if (key === " ") event.preventDefault();
+        }
+      });
+
+      window.addEventListener("keyup", (event) => {
+        const key = event.key;
+        if (key in keys) {
+          keys[key] = false;
+        }
+      });
+
+      renderModuleState();
+      updateHeader();
+      requestAnimationFrame(animate);
+    </script>
+  </body>
+</html>
